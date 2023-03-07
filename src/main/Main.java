@@ -1,12 +1,9 @@
 package main;
 
-import main.manager.*;
-
-import main.option.OptionPath;
+import main.manager.GameManager;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        UIManager.clearScreen();
-        UIManager.sendAndReceive(OptionPath.mainPage);
+        GameManager.getInstance().gameInit();
     }
 }

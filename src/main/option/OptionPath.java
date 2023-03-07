@@ -7,7 +7,11 @@ import main.manager.*;
 
 public class OptionPath {
     private static void nextPage(Options page){
-        UIManager.sendAndReceive(page);
+        UIManager.getInstance().sendAndReceive(page);
+    }
+
+    private static void decrementMovesLeft(){
+        GameManager.getInstance().getCurrentPlayer().decrementMovesLeft();
     }
 
     /*
@@ -17,6 +21,7 @@ public class OptionPath {
     private static Option[] options3 = {
         new Option("Wow! a third page!", ()->{
             System.out.println("third page!!!!");
+            decrementMovesLeft();
         })
     };
     
@@ -25,6 +30,7 @@ public class OptionPath {
     private static Option[] options2 = {
         new Option("This is a second page", ()->{
             System.out.println("this is the first option of second page");
+            decrementMovesLeft();
         }),
 
         new Option("Go to THIRD PAGE!", ()->{
@@ -33,16 +39,17 @@ public class OptionPath {
     };
     private static Options page2 = new Options(Arrays.asList(options2), "Second Page");
 
-    private static Option[] options1 = {
-        new Option("This will do something", ()->{
+    private static Option[] mainOptions = {
+        new Option("This will go to the second page!", ()->{
             nextPage(page2);
         }),
         new Option("This will do another thing", ()->{
             System.out.println("Wow you did it!");
+            decrementMovesLeft();
         })
     };
 
 
 
-    public static Options mainPage = new Options(Arrays.asList(options1), "Main Page");
+    public static Options mainPage = new Options(Arrays.asList(mainOptions), UIManager.getInstance().getColoredText("green", "Main Screen"));
 }
