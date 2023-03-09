@@ -1,17 +1,41 @@
 package main.option;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import main.manager.*;
 
 
 public class OptionPath {
+
     private static void nextPage(Options page){
         UIManager.getInstance().sendAndReceive(page);
     }
 
     private static void decrementMovesLeft(){
         GameManager.getInstance().getCurrentPlayer().decrementMovesLeft();
+    }
+
+    private static void removeFromList(Options page, String title){
+        page.getOptions().removeIf(option -> option.getTitle().equals(title));
+    }
+
+    private static void setMessage(String message){
+        UIManager.getInstance().setMessage1(message);
+    }
+    
+    private static void buy(String message, int price, boolean removeFromList, Options page, String name){
+        if(GameManager.getInstance().getCurrentPlayer().getMoneyLeft() >= price){
+            setMessage(message);
+            GameManager.getInstance().getCurrentPlayer().decreseMoneyLeft(price);
+
+            if(removeFromList){
+                removeFromList(page, name);
+            }
+            decrementMovesLeft();
+        }else{
+            setMessage(UIManager.getInstance().getColoredText("red", "You do not have enough money."));
+        }
     }
 
     /*
@@ -25,11 +49,11 @@ public class OptionPath {
         })
     };
     
-    private static Options page3 = new Options(Arrays.asList(options3), "Third Page");
+    private static Options page3 = new Options(new ArrayList<>(Arrays.asList(options3)), "Third Page");
 
     private static Option[] options2 = {
         new Option("This is a second page", ()->{
-            System.out.println("this is the first option of second page");
+            setMessage("FIRst option OF THE SECOND PAGE");
             decrementMovesLeft();
         }),
 
@@ -37,19 +61,23 @@ public class OptionPath {
             nextPage(page3);
         })
     };
-    private static Options page2 = new Options(Arrays.asList(options2), "Second Page");
+    private static Options page2 = new Options(new ArrayList<>(Arrays.asList(options2)), "Second Page");
 
+
+    public static Options mainPage;
+
+    private static int m1 = 100;
     private static Option[] mainOptions = {
         new Option("This will go to the second page!", ()->{
             nextPage(page2);
         }),
-        new Option("This will do another thing", ()->{
-            System.out.println("Wow you did it!");
-            decrementMovesLeft();
+        new Option("This will do another thing $"+m1, ()->{
+            buy("WOW you did it!", m1, true, mainPage, "This will do another thing $"+m1);
         })
     };
 
 
-
-    public static Options mainPage = new Options(Arrays.asList(mainOptions), UIManager.getInstance().getColoredText("green", "Main Screen"));
+     static{
+        mainPage = new Options(new ArrayList<>(Arrays.asList(mainOptions)), "Main Screen");
+    }
 }

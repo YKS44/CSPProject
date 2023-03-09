@@ -1,12 +1,13 @@
 package main.option;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Options {
-    private List<Option> options;
+    private ArrayList<Option> options;
     private String title;
 
-	public Options(List<Option> options, String title){
+	public Options(ArrayList<Option> options, String title){
 		this.options = options;
         this.title = title;
     }

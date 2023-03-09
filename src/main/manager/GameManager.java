@@ -12,12 +12,21 @@ public class GameManager {
     }
 
     private static GameManager instance;
+
+    static{
+        instance = new GameManager();
+    }
+
     private final Scanner scanner;
-    private Player currentPlayer;
 
-
+    
     private Player player1;
     private Player player2;
+    
+    private Player currentPlayer;
+    private Player otherPlayer;
+
+    public boolean turnDone;
 
     private GameState currentState;
 
@@ -27,6 +36,11 @@ public class GameManager {
         player2 = new Player("Player 2");
 
         currentPlayer = player1;
+        otherPlayer = player2;
+
+        turnDone = false;
+
+        setUpCommand();
     }
 
 
@@ -34,15 +48,15 @@ public class GameManager {
         UIManager.getInstance().clearScreen();
 
         getPlayerName();
-
-        System.out.println("Player1: " + player1.getName());
-        System.out.println("Player2: " + player2.getName() + "\n");
-
         startGame();
     }
 
     public Player getCurrentPlayer(){
         return currentPlayer;
+    }
+
+    public Player getOtherPlayer(){
+        return otherPlayer;
     }
 
     private void getPlayerName(){
@@ -62,33 +76,55 @@ public class GameManager {
     private void changeTurn(){
         if(currentPlayer.equals(player1)){
             player1 = currentPlayer;
+            player2 = otherPlayer;
+
             currentPlayer = player2;
+            otherPlayer = player1;
         }else if(currentPlayer.equals(player2)){
             player2 = currentPlayer;
+            player1 = otherPlayer;
+
             currentPlayer = player1;
+            otherPlayer = player2;
         }
-        UIManager.getInstance().printInColor("blue", "It is now your turn, " + currentPlayer.getName());
+        UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("blue", "It is now your turn, " + currentPlayer.getName()));
     }
 
     private void startGame(){
         currentState = GameState.INGAME;
 
-        UIManager.getInstance().printInColor("yellow", "Type 'home' or 'h' to go back to the main page and 'back' or 'b' to go to the previous page.\n");
+        UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Type 'home' or 'h' to go back to the main page and 'back' or 'b' to go to the previous page.\n"));
         UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
 
-        while(currentState != GameState.END){
+        while(currentState == GameState.INGAME){
             if(currentPlayer.getTurnsLeft() > 0){
+                UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Moves Left: " + currentPlayer.getTurnsLeft()));
                 UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
             }else{
-                currentPlayer.resetNumOfMoves();
-                changeTurn();
+                turnDone = true;
+                UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("blue", "Your turn has now ended. Type 'end' to end your turn."));
+                UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
             }
         }
     }
 
-    public static GameManager getInstance(){
-        if(instance == null){instance = new GameManager(); }
+    private void setUpCommand(){
+        CommandManager cmd = CommandManager.getInstance();
 
+        cmd.addCommand("end", ()->{
+            currentPlayer.resetNumOfMoves();
+            UIManager.getInstance().clearScreen();
+            UIManager.getInstance().printInColor("purple", "Changing Player..");
+            try{
+                Thread.sleep(2000);
+            }catch(InterruptedException e){}
+            UIManager.getInstance().clearScreen();
+            changeTurn();
+            turnDone = false;
+        });
+    }
+
+    public static GameManager getInstance(){
         return instance;
     }
 }

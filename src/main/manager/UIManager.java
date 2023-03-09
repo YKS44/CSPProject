@@ -13,6 +13,10 @@ public class UIManager{
 
     private static UIManager instance;
 
+    static{
+        instance = new UIManager();
+    }
+
     private final Scanner scanner;
 
     private final String RESET;
@@ -21,6 +25,8 @@ public class UIManager{
 
     private List<Options> prev;
     private Options current;
+    private String message1;
+    private String message2;
 
     private UIManager(){
         scanner = new Scanner(System.in);
@@ -37,12 +43,14 @@ public class UIManager{
         colorMap.put("white","\033[0;37m");
 
         prev = new ArrayList<>();
+        message1 = "";
+        message2 = "";
         current = null;
+
+        setUpCommand();
     }
 
     public static UIManager getInstance(){
-        if(instance == null){instance = new UIManager(); }
-
         return instance;
     } 
 
@@ -52,49 +60,43 @@ public class UIManager{
         }
         current = options;
 
-        System.out.println(options.getTitle() + "\n");
+        print(options);
 
-        for(int i = 0; i < options.getOptions().size(); i++){
-            System.out.println((i+1) + ". " + options.getOptions().get(i).getTitle());
-        }
-
-        System.out.println("\n");
         String input = scanner.nextLine();
         
         clearScreen();
 
         try{
+            if(GameManager.getInstance().turnDone && !input.equals("end")){
+                setMessage1(getColoredText("red", "You have run out of moves. Please end your turn"));
+                return;
+            }
+
             int idx = Integer.parseInt(input) - 1;
     
             Option selected = options.getOptions().get(idx);
             prev.add(options);
             selected.getAction().execute();
         }catch(Exception e){
-            if(input.toLowerCase().equals("home") || input.toLowerCase().equals("h")){
-                prev.clear();
-                sendAndReceive(OptionPath.mainPage);
-            }else if(input.toLowerCase().equals("back") || input.toLowerCase().equals("b")){
-                if(!prev.isEmpty()){
-                    Options back = prev.get(prev.size() - 1);
-                    prev.remove(prev.size() - 1);
-                    current = null;
-                    sendAndReceive(back);
-                }else{
-                    sendAndReceive(options);
-                }
-            }else{
-                printInColor("red", "Incorrect Input");
-                sendAndReceive(options);
-            }
+            CommandManager.getInstance().invokeCommand(input);
         }
+
     }
 
-    public void send(Options options){
-        String[] messages = (String[]) options.getOptions().stream().toArray();
+    public void print(Options options){
+        System.out.printf(getColoredText("green", "%-25s ")+ getColoredText("cyan", "Money: $%d\n\n"),options.getTitle(), GameManager.getInstance().getCurrentPlayer().getMoneyLeft());
 
-        for(int i = 0; i < messages.length; i++){
-            System.out.println((i+1) + messages[i]);
+        for(int i = 0; i < options.getOptions().size(); i++){
+            System.out.println((i+1) + ". " + options.getOptions().get(i).getTitle());
         }
+
+        System.out.println("");
+
+        System.out.println(message1);
+        System.out.println(message2);
+
+        message1 = "";
+        message2 = "";
     }
 
     public void clearScreen(){
@@ -110,7 +112,31 @@ public class UIManager{
         return getColor(color) + text + RESET;
     }
 
+    public void setMessage1(String message){
+        this.message1 = message;
+    }
+
+    public void setMessage2(String message){
+        this.message2 = message;
+    }
+
     private String getColor(String color){
         return colorMap.get(color);
+    }
+
+    private void setUpCommand(){
+        CommandManager cmd = CommandManager.getInstance();
+
+        cmd.addCommand("home", () -> sendAndReceive(OptionPath.mainPage));
+        cmd.addCommand("back", () -> {
+            if(!prev.isEmpty()){
+                Options back = prev.get(prev.size() - 1);
+                prev.remove(prev.size() - 1);
+                current = null;
+                sendAndReceive(back);
+            }else{
+                sendAndReceive(OptionPath.mainPage);
+            }
+        });
     }
 }
