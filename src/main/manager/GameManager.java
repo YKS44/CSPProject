@@ -1,5 +1,6 @@
 package main.manager;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import main.Player;
@@ -30,6 +31,10 @@ public class GameManager {
 
     private GameState currentState;
 
+    private int roundNumber;
+
+    private ArrayList<String> actionsTook;
+
     private GameManager(){
         scanner = new Scanner(System.in);
         player1 = new Player("Player 1");
@@ -38,7 +43,11 @@ public class GameManager {
         currentPlayer = player1;
         otherPlayer = player2;
 
+        roundNumber = 1;
+
         turnDone = false;
+
+        actionsTook = new ArrayList<>();
 
         setUpCommand();
     }
@@ -67,9 +76,27 @@ public class GameManager {
 
             String input = scanner.nextLine();
             currentPlayer.setName(input);
-            changeTurn();
+            changeTurnForInit();
 
+            
             UIManager.getInstance().clearScreen();
+        }
+    }
+
+    private void changeTurnForInit(){
+        if(currentPlayer.equals(player1)){
+            currentPlayer.calculateIncome();
+            player1 = currentPlayer;
+            player2 = otherPlayer;
+
+            currentPlayer = player2;
+            otherPlayer = player1;
+        }else if(currentPlayer.equals(player2)){
+            player2 = currentPlayer;
+            player1 = otherPlayer;
+
+            currentPlayer = player1;
+            otherPlayer = player2;
         }
     }
 
@@ -86,14 +113,15 @@ public class GameManager {
 
             currentPlayer = player1;
             otherPlayer = player2;
+            roundNumber++;
         }
-        UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("blue", "It is now your turn, " + currentPlayer.getName()));
+        UIManager.getInstance().turnChange();
     }
 
     private void startGame(){
         currentState = GameState.INGAME;
 
-        UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Type 'home' or 'h' to go back to the main page and 'back' or 'b' to go to the previous page.\n"));
+        UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Type 'h' to go back to the main page and 'b' to go to the previous page.\n"));
         UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
 
         while(currentState == GameState.INGAME){
@@ -108,15 +136,27 @@ public class GameManager {
         }
     }
 
+    public void addActionTook(String action){
+        actionsTook.add(action);
+    }
+
+    public ArrayList<String> getActionsTook(){
+        return actionsTook;
+    }
+
+    public int getRoundNumber(){
+        return roundNumber;
+    }
+
     private void setUpCommand(){
         CommandManager cmd = CommandManager.getInstance();
 
         cmd.addCommand("end", ()->{
             currentPlayer.resetNumOfMoves();
             UIManager.getInstance().clearScreen();
-            UIManager.getInstance().printInColor("purple", "Changing Player..");
+            UIManager.getInstance().printInColor("purple", "Ending turn..");
             try{
-                Thread.sleep(2000);
+                Thread.sleep(1500);
             }catch(InterruptedException e){}
             UIManager.getInstance().clearScreen();
             changeTurn();

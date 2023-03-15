@@ -25,7 +25,7 @@ public class CommandManager{
         if(commandMap.containsKey(name)){
             commandMap.get(name).execute();
         }else{
-            UIManager.getInstance().printInColor("red","Incorrect Input");
+            UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("red", "Incorrect Input"));
         }
     }
 

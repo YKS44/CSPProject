@@ -2,82 +2,138 @@ package main.option;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.BooleanSupplier;
 
 import main.manager.*;
 
 
 public class OptionPath {
-
-    private static void nextPage(Options page){
-        UIManager.getInstance().sendAndReceive(page);
+    private static Option nextPage(String name, Options page){
+        return new Option(name, ()->UIManager.getInstance().sendAndReceive(page));
     }
 
-    private static void decrementMovesLeft(){
+    public static void decrementMovesLeft(){
         GameManager.getInstance().getCurrentPlayer().decrementMovesLeft();
-    }
-
-    private static void removeFromList(Options page, String title){
-        page.getOptions().removeIf(option -> option.getTitle().equals(title));
     }
 
     private static void setMessage(String message){
         UIManager.getInstance().setMessage1(message);
     }
     
-    private static void buy(String message, int price, boolean removeFromList, Options page, String name){
-        if(GameManager.getInstance().getCurrentPlayer().getMoneyLeft() >= price){
-            setMessage(message);
-            GameManager.getInstance().getCurrentPlayer().decreseMoneyLeft(price);
+    private static void addActionTook(String action){
+        GameManager.getInstance().addActionTook(action);
+    }
 
-            if(removeFromList){
-                removeFromList(page, name);
+    public static Option buyOption(String name, Action action, int price){
+        String title = String.format("%-35s "+UIManager.getInstance().getColoredText("yellow", "$%d"),name,price);
+
+        return new Option(title,()->{
+            if(GameManager.getInstance().getCurrentPlayer().getMoneyLeft() >= price){
+                action.execute();
+                GameManager.getInstance().getCurrentPlayer().decreseMoneyLeft(price);
+                addActionTook(name);
+                decrementMovesLeft();
+            }else{
+                setMessage(UIManager.getInstance().getColoredText("red", "You do not have enough money."));
             }
-            decrementMovesLeft();
-        }else{
-            setMessage(UIManager.getInstance().getColoredText("red", "You do not have enough money."));
-        }
+        });
     }
 
-    /*
-     * Test
-     */
+    public static Option buyOption(String name, Action action, int price, BooleanSupplier isUnlocked){
+        String title = String.format("%-35s "+UIManager.getInstance().getColoredText("yellow", "$%d"),name,price);
 
-    private static Option[] options3 = {
-        new Option("Wow! a third page!", ()->{
-            System.out.println("third page!!!!");
-            decrementMovesLeft();
-        })
+        return new Option(title,()->{
+            if(GameManager.getInstance().getCurrentPlayer().getMoneyLeft() >= price){
+                action.execute();
+                GameManager.getInstance().getCurrentPlayer().decreseMoneyLeft(price);
+                addActionTook(name);
+                decrementMovesLeft();
+            }else{
+                setMessage(UIManager.getInstance().getColoredText("red", "You do not have enough money."));
+            }
+        },isUnlocked);
+    }
+
+    /////////////////////////////////////////////////
+
+    private static Option[] econOptions3 = {
+
     };
-    
-    private static Options page3 = new Options(new ArrayList<>(Arrays.asList(options3)), "Third Page");
 
-    private static Option[] options2 = {
-        new Option("This is a second page", ()->{
-            setMessage("FIRst option OF THE SECOND PAGE");
-            decrementMovesLeft();
-        }),
+    private static Option[] econOptions2 = {
+        buyOption("Employees For Hire", ()->{
 
-        new Option("Go to THIRD PAGE!", ()->{
-            nextPage(page3);
-        })
+        }, 0,()->{return true;}),
+        buyOption("Improve Website+", ()->{
+
+        }, 0, ()->{return true;}),
+        buyOption("Repair Technicians", ()->{
+
+        }, 0, ()->{return true;}),
+        buyOption("Megacorp", ()->{
+
+        }, 0, ()->{return true;}),
+        buyOption("Managers", ()->{
+
+        },0, ()->{return true;}),
+        nextPage("Page 3", null)
     };
-    private static Options page2 = new Options(new ArrayList<>(Arrays.asList(options2)), "Second Page");
+
+    private static Options econPage2 = new Options(new ArrayList<>(Arrays.asList(econOptions2)), "Page 2");
+
+    private static Option[] econOptions1 = {
+        buyOption("Improve Website", ()->{
+            
+        }, 0, ()->{return false;}),
+        buyOption("Improve Efficiency", ()->{
+            setMessage("improve effi");
+        }, 0),
+        buyOption("Advertisements", ()->{
+            setMessage("advertisement");
+        }, 0),
+        buyOption("Longer Work Hours", ()->{
+
+        }, 0),
+        buyOption("Legitimate Inc.", ()->{
+
+        }, 0),
+        nextPage("Page 2", econPage2)
+    };
+
+    private static Options econPage1 = new Options(new ArrayList<>(Arrays.asList(econOptions1)), "Build up Economy");
 
 
-    public static Options mainPage;
+    private static Option[] attackOptions = {
+        buyOption("Decrease Opponent Income", ()->{
+            setMessage("You have decreased opponent's income");
+            GameManager.getInstance().getOtherPlayer().addDamage("Decreased Income",()->{
+                GameManager.getInstance().getCurrentPlayer().decreaseIncomeAffected(100);
+            },100);
+        }, 100)  
+    };
 
-    private static int m1 = 100;
+    private static Options attackPage = new Options(new ArrayList<>(Arrays.asList(attackOptions)), "Attack Moves");
+
+
+    private static Option[] reputationOptions = {
+        
+    };
+
+    private static Options reputationPage = new Options(new ArrayList<>(Arrays.asList(reputationOptions)), "Reputation Moves");
+
+
     private static Option[] mainOptions = {
-        new Option("This will go to the second page!", ()->{
-            nextPage(page2);
+        nextPage("Build Economy", econPage1),
+        nextPage("Launch Offensive", attackPage),
+        nextPage("Improve Reputation", reputationPage),
+        new Option("Repair Infrastructure",()->{
+            GameManager.getInstance().getCurrentPlayer().printDamageTook();
         }),
-        new Option("This will do another thing $"+m1, ()->{
-            buy("WOW you did it!", m1, true, mainPage, "This will do another thing $"+m1);
-        })
+        new Option("Markets", ()->{
+
+        }) 
     };
 
-
-     static{
-        mainPage = new Options(new ArrayList<>(Arrays.asList(mainOptions)), "Main Screen");
-    }
+    public static Options mainPage = new Options(new ArrayList<>(Arrays.asList(mainOptions)), "Main Page");
+    
 }

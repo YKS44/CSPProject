@@ -60,7 +60,7 @@ public class UIManager{
         }
         current = options;
 
-        print(options);
+        printOptions(options);
 
         String input = scanner.nextLine();
         
@@ -68,26 +68,39 @@ public class UIManager{
 
         try{
             if(GameManager.getInstance().turnDone && !input.equals("end")){
-                setMessage1(getColoredText("red", "You have run out of moves. Please end your turn"));
+                setMessage1(getColoredText("red", "Unfortunately, you are unable to make any more actions. Please end the turn."));
                 return;
             }
 
             int idx = Integer.parseInt(input) - 1;
-    
+            
             Option selected = options.getOptions().get(idx);
-            prev.add(options);
-            selected.getAction().execute();
+
+            if(selected.getIsUnlocked() == true){
+                prev.add(options);
+                selected.getAction().execute();
+            }else{
+                setMessage1(getColoredText("red", "This option is currently locked."));
+            }
+            
         }catch(Exception e){
             CommandManager.getInstance().invokeCommand(input);
         }
 
     }
 
-    public void print(Options options){
-        System.out.printf(getColoredText("green", "%-25s ")+ getColoredText("cyan", "Money: $%d\n\n"),options.getTitle(), GameManager.getInstance().getCurrentPlayer().getMoneyLeft());
+    public void printOptions(Options options){
+        System.out.printf(getColoredText("green", "%-31s ")+ getColoredText("cyan", "Money: $%d\n\n"),options.getTitle(), GameManager.getInstance().getCurrentPlayer().getMoneyLeft());
 
         for(int i = 0; i < options.getOptions().size(); i++){
-            System.out.println((i+1) + ". " + options.getOptions().get(i).getTitle());
+            Option option = options.getOptions().get(i);
+
+            if(option.getIsUnlocked() == true){
+                System.out.println((i+1) + ". " + option.getTitle());
+            }else{
+                System.out.println((i+1) + ". " + option.getTitle() + getColoredText("red", "[LOCKED]"));
+            }
+            
         }
 
         System.out.println("");
@@ -96,7 +109,7 @@ public class UIManager{
         System.out.println(message2);
 
         message1 = "";
-        message2 = "";
+        //message2 = "";
     }
 
     public void clearScreen(){
@@ -120,6 +133,21 @@ public class UIManager{
         this.message2 = message;
     }
 
+    public void turnChange(){
+        System.out.println("It is your turn, " + getColoredText("green", GameManager.getInstance().getCurrentPlayer().getName()) + "\n");
+        System.out.println("Your income was " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().calculateIncome()));
+        System.out.println("You currently have " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().getMoneyLeft()));
+        System.out.println("You have "+ getColoredText("yellow", GameManager.getInstance().getCurrentPlayer().getCurrentHealth()+"") + " infrastructure health out of " + getColoredText("yellow", GameManager.getInstance().getCurrentPlayer().getMaxHealth()+""));
+        System.out.println("Last turn, the opponent has taking the following actions:");
+        for(int i = 0; i < GameManager.getInstance().getActionsTook().size(); i++){
+            System.out.println("\t-"+GameManager.getInstance().getActionsTook().get(i));
+        }
+        GameManager.getInstance().getActionsTook().clear();
+        System.out.println("\nPlease input anything to go to the main page.");
+        scanner.nextLine();
+       clearScreen();
+    }
+
     private String getColor(String color){
         return colorMap.get(color);
     }
@@ -127,8 +155,8 @@ public class UIManager{
     private void setUpCommand(){
         CommandManager cmd = CommandManager.getInstance();
 
-        cmd.addCommand("home", () -> sendAndReceive(OptionPath.mainPage));
-        cmd.addCommand("back", () -> {
+        cmd.addCommand("h", () -> sendAndReceive(OptionPath.mainPage));
+        cmd.addCommand("b", () -> {
             if(!prev.isEmpty()){
                 Options back = prev.get(prev.size() - 1);
                 prev.remove(prev.size() - 1);
