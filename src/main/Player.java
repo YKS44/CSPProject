@@ -23,7 +23,10 @@ public class Player {
     private int maxHealth;
     private int currentHealth;
 
-    private HashMap<String, HashMap<Action, Integer>> damageTook;
+    public HashMap<String, Action> damageTook;
+    private int costToRepair;
+
+    public Action trojanMail = null;
 
     public Player(String name) {
         this.name = name;
@@ -39,6 +42,7 @@ public class Player {
         currentHealth = maxHealth;
 
         damageTook = new HashMap<>();
+        costToRepair = 100;
     }
 
     public String getName() {
@@ -89,47 +93,67 @@ public class Player {
         incomeAffected -= income;
     }
 
-    public void printDamageTook() {
-        ArrayList<Option> damageTookOption = new ArrayList<>();
+    public void decreaseHealth(int amount){
+        currentHealth -= amount;
+    }
 
-        if (!damageTook.isEmpty()) {
-            for (int i = 0; i < damageTook.size(); i++) {
-                String key = damageTook.keySet().toArray(String[]::new)[i];
-                Action key2 = damageTook.get(key).keySet().toArray(Action[]::new)[i];
-                int price = damageTook.get(key).get(key2);
 
-                Option option = OptionPath.buyOption(key, () -> {
-                    UIManager.getInstance().setMessage1("You have removed " + UIManager.getInstance().getColoredText("red", key));
-                    damageTook.remove(key);
-                    OptionPath.decrementMovesLeft();
-                }, price);
-                damageTookOption.add(option);
+    public Options getRepairDamagePage(){
+        ArrayList<Option> repairDamagePage = new ArrayList<>();
+
+        Option checkTrojanOption = OptionPath.buyOption("Check for Trojan Mails", ()->{
+            UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Moves Left: " + currentMovesLeft));
+            if(trojanMail != null){
+                trojanMail = null;
+                UIManager.getInstance().setMessage1("You have removed " + UIManager.getInstance().getColoredText("red", "Trojan Mail"));
+                UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
+            }else{
+                UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("red", "You did not have any trojan mails."));
+                UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
             }
-        } else {
-            UIManager.getInstance()
-                    .setMessage1(UIManager.getInstance().getColoredText("red", "You have not receieved any attacks."));
-            return;
-        }
-        Options page = new Options(damageTookOption, "What would you like to remove?");
+        }, 0);
 
-        UIManager.getInstance().sendAndReceive(page);
+        repairDamagePage.add(checkTrojanOption);
+
+        Option repairInfraHPOption = OptionPath.buyOption("Repair Infrastructure HP", ()->{
+
+        }, 0);
+
+        repairDamagePage.add(repairInfraHPOption);
+
+        if(!damageTook.isEmpty()){            
+            int numOfDamage = damageTook.size();
+
+            Option repairEconOption = OptionPath.buyOption("Repair All Attacks", ()->{
+                damageTook.clear();
+                decrementMovesLeft();
+                UIManager.getInstance().setMessage1("You have removed all damages.");
+                UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
+            }, numOfDamage * costToRepair);
+
+            repairDamagePage.add(repairEconOption);
+        }
+
+        return Options.buildPage(repairDamagePage, "Repair Damage");
+
     }
 
     public void updateStats() {
         if (!damageTook.isEmpty()) {
             for (int i = 0; i < damageTook.size(); i++) {
                 String key = damageTook.keySet().toArray(String[]::new)[i];
-                Action action = damageTook.get(key).keySet().toArray(Action[]::new)[i];
+                Action action = damageTook.get(key);
                 action.execute();
             }
         }
+
+        if(trojanMail != null){
+            trojanMail.execute();
+        }
     }
 
-    public void addDamage(String name, Action action, int price){
-        HashMap<Action, Integer> map2 = new HashMap<>();
-        map2.put(action,price);
-
-        damageTook.put(name,map2);
+    public void addDamageTook(String name, Action action){
+        damageTook.put(name,action);
     }
 
     public int calculateIncome() {

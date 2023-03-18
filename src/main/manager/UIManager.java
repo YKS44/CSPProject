@@ -8,6 +8,7 @@ import java.util.Scanner;
 import main.option.*;
 
 public class UIManager{
+    private final boolean canClearScreen = true; //for testing purposes
 
     //https://www.w3schools.blog/ansi-colors-java
 
@@ -27,6 +28,7 @@ public class UIManager{
     private Options current;
     private String message1;
     private String message2;
+
 
     private UIManager(){
         scanner = new Scanner(System.in);
@@ -81,6 +83,7 @@ public class UIManager{
                 selected.getAction().execute();
             }else{
                 setMessage1(getColoredText("red", "This option is currently locked."));
+                sendAndReceive(options);
             }
             
         }catch(Exception e){
@@ -94,11 +97,13 @@ public class UIManager{
 
         for(int i = 0; i < options.getOptions().size(); i++){
             Option option = options.getOptions().get(i);
+            String title = option.getTitle();
 
             if(option.getIsUnlocked() == true){
-                System.out.println((i+1) + ". " + option.getTitle());
+                System.out.println((i+1) + ". " + title);
             }else{
-                System.out.println((i+1) + ". " + option.getTitle() + getColoredText("red", "[LOCKED]"));
+
+                System.out.println((i+1) + ". " + getColoredText("red", "[LOCKED]"));
             }
             
         }
@@ -113,8 +118,10 @@ public class UIManager{
     }
 
     public void clearScreen(){
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+        if(canClearScreen){
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+        }
     }
 
     public void printInColor(String color, String message){

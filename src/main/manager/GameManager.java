@@ -7,11 +7,6 @@ import main.Player;
 import main.option.OptionPath;
 
 public class GameManager {
-    enum GameState{
-        INGAME,
-        END
-    }
-
     private static GameManager instance;
 
     static{
@@ -29,7 +24,7 @@ public class GameManager {
 
     public boolean turnDone;
 
-    private GameState currentState;
+    private boolean isGameDone;
 
     private int roundNumber;
 
@@ -57,7 +52,7 @@ public class GameManager {
         UIManager.getInstance().clearScreen();
 
         getPlayerName();
-        startGame();
+        startGameLoop();
     }
 
     public Player getCurrentPlayer(){
@@ -118,13 +113,13 @@ public class GameManager {
         UIManager.getInstance().turnChange();
     }
 
-    private void startGame(){
-        currentState = GameState.INGAME;
+    private void startGameLoop(){
+        isGameDone = false;
 
         UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Type 'h' to go back to the main page and 'b' to go to the previous page.\n"));
         UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
 
-        while(currentState == GameState.INGAME){
+        while(!isGameDone){
             if(currentPlayer.getTurnsLeft() > 0){
                 UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Moves Left: " + currentPlayer.getTurnsLeft()));
                 UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
@@ -161,6 +156,11 @@ public class GameManager {
             UIManager.getInstance().clearScreen();
             changeTurn();
             turnDone = false;
+        });
+
+        cmd.addCommand("test", ()->{
+            System.out.println("Current Player: " + currentPlayer.damageTook);
+            System.out.println("Other Player: " + otherPlayer.damageTook);
         });
     }
 
