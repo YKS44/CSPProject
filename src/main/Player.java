@@ -111,13 +111,13 @@ public class Player {
                 UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("red", "You did not have any trojan mails."));
                 UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
             }
-        }, 0);
+        }, 0, "Checks for Trojan Mails. Uses one move when used.");
 
         repairDamagePage.add(checkTrojanOption);
 
         Option repairInfraHPOption = OptionPath.buyOption("Repair Infrastructure HP", ()->{
 
-        }, 0);
+        }, 0, "Repairs infrastructure HP");
 
         repairDamagePage.add(repairInfraHPOption);
 
@@ -129,7 +129,7 @@ public class Player {
                 decrementMovesLeft();
                 UIManager.getInstance().setMessage1("You have removed all damages.");
                 UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
-            }, numOfDamage * costToRepair);
+            }, numOfDamage * costToRepair, "Repairs all damage took");
 
             repairDamagePage.add(repairEconOption);
         }

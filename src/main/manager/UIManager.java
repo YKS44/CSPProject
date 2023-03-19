@@ -25,7 +25,7 @@ public class UIManager{
     private HashMap<String, String> colorMap = new HashMap<>();
 
     private List<Options> prev;
-    private Options current;
+    private Options currentPage;
     private String message1;
     private String message2;
 
@@ -47,7 +47,7 @@ public class UIManager{
         prev = new ArrayList<>();
         message1 = "";
         message2 = "";
-        current = null;
+        currentPage = null;
 
         setUpCommand();
     }
@@ -57,10 +57,10 @@ public class UIManager{
     } 
 
     public void sendAndReceive(Options options){
-        if(current != null && !prev.contains(current)){
-            prev.add(current);
+        if(currentPage != null && !prev.contains(currentPage)){
+            prev.add(currentPage);
         }
-        current = options;
+        currentPage = options;
 
         printOptions(options);
 
@@ -87,9 +87,29 @@ public class UIManager{
             }
             
         }catch(Exception e){
-            CommandManager.getInstance().invokeCommand(input);
+            if(input.startsWith("info") && input.split(" ").length == 2){
+                String[] cmd = input.split(" ");
+                try{
+                    int idx = Integer.parseInt(cmd[1]);
+
+                    setMessage1(getDescription(idx - 1));
+                }catch(NumberFormatException e2){
+                    setMessage1(getColoredText("red", "Please input a number, not a character."));
+                }
+                sendAndReceive(options);
+            }else{
+                CommandManager.getInstance().invokeCommand(input);
+            }
         }
 
+    }
+
+    private String getDescription(int idx){
+        if(idx < 0 || idx > currentPage.getOptions().size()){
+            return getColoredText("red", "Please type a correct argument.");
+        }else{
+            return currentPage.getOptions().get(idx).getDescription();
+        }
     }
 
     public void printOptions(Options options){
@@ -167,7 +187,7 @@ public class UIManager{
             if(!prev.isEmpty()){
                 Options back = prev.get(prev.size() - 1);
                 prev.remove(prev.size() - 1);
-                current = null;
+                currentPage = null;
                 sendAndReceive(back);
             }else{
                 sendAndReceive(OptionPath.mainPage);
