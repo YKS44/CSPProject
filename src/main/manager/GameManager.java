@@ -9,12 +9,7 @@ import main.option.OptionPath;
 public class GameManager {
     private static GameManager instance;
 
-    static{
-        instance = new GameManager();
-    }
-
     private final Scanner scanner;
-
     
     private Player player1;
     private Player player2;
@@ -116,7 +111,7 @@ public class GameManager {
     private void startGameLoop(){
         isGameDone = false;
 
-        UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Type 'h' to go back to the main page and 'b' to go to the previous page.\n"));
+        UIManager.getInstance().setMessage2(UIManager.getInstance().getColoredText("yellow", "Type 'h' to go back to the main page, 'b' to go to the previous page, and 'info [#]' to get description of the option.\n"));
         UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
 
         while(!isGameDone){
@@ -165,6 +160,10 @@ public class GameManager {
     }
 
     public static GameManager getInstance(){
+        if(instance == null)
+        {
+            instance = new GameManager();
+        }
         return instance;
     }
 }

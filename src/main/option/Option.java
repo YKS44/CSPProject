@@ -21,7 +21,8 @@ public class Option{
         this.title = title;
         this.action = action;
         this.description = description;
-        this.isUnlockedSupplier = ()->{return true;};
+        this.isUnlockedSupplier = ()->true;
+        
     }
 
     public String getTitle(){

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import main.option.*;
 
@@ -13,10 +14,6 @@ public class UIManager{
     //https://www.w3schools.blog/ansi-colors-java
 
     private static UIManager instance;
-
-    static{
-        instance = new UIManager();
-    }
 
     private final Scanner scanner;
 
@@ -28,7 +25,6 @@ public class UIManager{
     private Options currentPage;
     private String message1;
     private String message2;
-
 
     private UIManager(){
         scanner = new Scanner(System.in);
@@ -53,6 +49,11 @@ public class UIManager{
     }
 
     public static UIManager getInstance(){
+        if(instance == null)
+        {
+            instance = new UIManager();
+        }
+
         return instance;
     } 
 
@@ -61,6 +62,8 @@ public class UIManager{
             prev.add(currentPage);
         }
         currentPage = options;
+
+        prev = (List<Options>) prev.stream().distinct().collect(Collectors.toList());
 
         printOptions(options);
 
@@ -98,7 +101,7 @@ public class UIManager{
                 }
                 sendAndReceive(options);
             }else{
-                CommandManager.getInstance().invokeCommand(input);
+                CommandManager.getInstance().invokeCommand(input, options);
             }
         }
 
@@ -163,6 +166,7 @@ public class UIManager{
     public void turnChange(){
         System.out.println("It is your turn, " + getColoredText("green", GameManager.getInstance().getCurrentPlayer().getName()) + "\n");
         System.out.println("Your income was " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().calculateIncome()));
+        System.out.println("Your current reputation is " + getColoredText("cyan", GameManager.getInstance().getCurrentPlayer().getReputation()+""));
         System.out.println("You currently have " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().getMoneyLeft()));
         System.out.println("You have "+ getColoredText("yellow", GameManager.getInstance().getCurrentPlayer().getCurrentHealth()+"") + " infrastructure health out of " + getColoredText("yellow", GameManager.getInstance().getCurrentPlayer().getMaxHealth()+""));
         System.out.println("Last turn, the opponent has taking the following actions:");
@@ -170,13 +174,18 @@ public class UIManager{
             System.out.println("\t-"+GameManager.getInstance().getActionsTook().get(i));
         }
         GameManager.getInstance().getActionsTook().clear();
-        System.out.println("\nPlease input anything to go to the main page.");
+        System.out.println("\nPlease press Enter to go to the main page.");
         scanner.nextLine();
        clearScreen();
     }
 
     private String getColor(String color){
         return colorMap.get(color);
+    }
+
+    public Options getCurrentPage()
+    {
+        return currentPage;
     }
 
     private void setUpCommand(){

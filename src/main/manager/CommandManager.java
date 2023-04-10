@@ -3,13 +3,10 @@ package main.manager;
 import java.util.HashMap;
 
 import main.option.Action;
+import main.option.Options;
 
 public class CommandManager{
     private static CommandManager instance;
-
-    static{
-        instance = new CommandManager();
-    }
 
     private HashMap<String,Action> commandMap;
 
@@ -21,15 +18,21 @@ public class CommandManager{
         commandMap.put(name,action);
     }
 
-    public void invokeCommand(String name){
+    public void invokeCommand(String name, Options page){
         if(commandMap.containsKey(name)){
             commandMap.get(name).execute();
         }else{
             UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("red", "Incorrect Input"));
+            UIManager.getInstance().sendAndReceive(page);
         }
     }
 
     public static CommandManager getInstance(){
+        if(instance == null)
+        {
+            instance = new CommandManager();
+        }
+
         return instance;
     }
 }
