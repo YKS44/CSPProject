@@ -65,7 +65,7 @@ public class OptionPath {
             if(gm.getCurrentPlayer().getMoneyLeft() >= price){
                 decrementMovesLeft();
                 action.execute();
-                gm.getCurrentPlayer().decreseMoneyLeft(price);
+                gm.getCurrentPlayer().decreseCurrentMoneyLeft(price);
                 addActionTook(name);
             }else{
                 setMessage(uim.getColoredText("red", "You do not have enough money."));
@@ -81,7 +81,7 @@ public class OptionPath {
             if(gm.getCurrentPlayer().getMoneyLeft() >= price){
                 decrementMovesLeft();
                 action.execute();
-                gm.getCurrentPlayer().decreseMoneyLeft(price);
+                gm.getCurrentPlayer().decreseCurrentMoneyLeft(price);
                 addActionTook(name);
             }else{
                 setMessage(uim.getColoredText("red", "You do not have enough money."));
@@ -97,11 +97,16 @@ public class OptionPath {
             if(gm.getCurrentPlayer().getMoneyLeft() >= price){
                 decrementMovesLeft();
                 action.execute();
-                gm.getCurrentPlayer().decreseMoneyLeft(price);
+                gm.getCurrentPlayer().decreseCurrentMoneyLeft(price);
             }else{
                 setMessage(uim.getColoredText("red", "You do not have enough money."));
             }
         },isUnlocked, lockDescription, description);
+    }
+
+    private static Option boughtOnceOption(Option option, BooleanSupplier bool)
+    {
+        return new Option(option.getTitle(), option.getAction(), bool, "This option can only be bought once.", option.getDescription() + " This option can only be bought once.");
     }
 
     private static String lockedDescriptionBuy(String item){
@@ -157,14 +162,14 @@ public class OptionPath {
      */
 
     private static Option[] econOptions3 = {
-        buyOption("ACTUALPRODUCT", ()->{
+        boughtOnceOption(buyOption("ACTUALPRODUCT", ()->{
             gm.getCurrentPlayer().increaseIncomePerRound(1000);
 
             setMessage("Increased income per round by %$1000");
-        }, 160000, ()->gm.getCurrentPlayer().managers, lockedDescriptionBuy("Managers"), "Sells a tangible product, drastically increasing income"),
+        }, 160000, ()->gm.getCurrentPlayer().managers, lockedDescriptionBuy("Managers"), "Sells a tangible product, drastically increasing income"), ()->gm.getCurrentPlayer().actualProduct),
 
         buyOption("Overtime", ()->{
-            int amountOfMovesAdded = (int) (1 + Math.round((0.01 * gm.getCurrentPlayer().getNumOfEmployees())));
+            int amountOfMovesAdded = (int) (1 + Math.round((gm.getCurrentPlayer().getOvertimeMultiplier() * gm.getCurrentPlayer().getNumOfEmployees())));
 
             gm.getCurrentPlayer().increaseNumOfMoves(amountOfMovesAdded);
 
@@ -178,14 +183,15 @@ public class OptionPath {
             setMessage("You have increased your current health and income per round.");
         }, 300, ()->gm.getCurrentPlayer().managers, lockedDescriptionBuy("Managers"), "Increases income and slightly increases infrastructure health."),
 
-        buyOption("Socialism", ()->{
+        boughtOnceOption(buyOption("Socialism", ()->{
             int equalIncomeForAllBecauseHaHaSocialismFunny =  Math.round((gm.getCurrentPlayer().getIncome() + gm.getOtherPlayer().getIncome()) / 2) + (random.nextInt(101) - 50);
 
             gm.getCurrentPlayer().setIncomePerRound(equalIncomeForAllBecauseHaHaSocialismFunny);
             gm.getOtherPlayer().setIncomePerRound(equalIncomeForAllBecauseHaHaSocialismFunny);
 
             setMessage("You have set the income for both players to " + equalIncomeForAllBecauseHaHaSocialismFunny);
-        }, 999999, ()->gm.getCurrentPlayer().managers, lockedDescriptionBuy("Managers"), "Turns the income of both sides equal to a value that ranges from +-50 of the average of the income between player one and two.")
+        }, 999999, ()->gm.getCurrentPlayer().managers, lockedDescriptionBuy("Managers"), "Turns the income of both sides equal to a value that ranges from +-50 of the average of the income between player one and two."), ()->gm.getCurrentPlayer().socialism)
+        
     };
 
     private static Options econPage3 = Options.buildPage(econOptions3, "Page 3");
@@ -195,7 +201,7 @@ public class OptionPath {
         buyOption("Employees For Hire", ()->{
             gm.getCurrentPlayer().decreaseIncome(10);
             gm.getCurrentPlayer().employeesForHire = true;
-            gm.getCurrentPlayer().increaseNumOfEmployees(1);
+            gm.getCurrentPlayer().increaseNumOfEmployees(2);
             gm.getCurrentPlayer().increaseMaxHealth(1);
             gm.getCurrentPlayer().increaseHealthLeft(1);
 
@@ -219,12 +225,12 @@ public class OptionPath {
 
         }, 5000, ()->gm.getCurrentPlayer().employeesForHire, lockedDescriptionBuy("Employees for Hire"), "Decreases income per round, hires three cybersecurity experts; experts do not increase email-type attacks’ effectiveness. Also decreases cost of repair and amount of infra damage done by all attacks from the opponent."),
 
-        buyOption("Megacorp", ()->{
+        boughtOnceOption(buyOption("Megacorp", ()->{
             gm.getCurrentPlayer().setCanTakeReputationalAttack(true);
             gm.getCurrentPlayer().megacorp = true;
 
             setMessage("You can now take reputational damage from your opponent. You also unlocked %Managers");
-        }, 100000, ()->gm.getCurrentPlayer().employeesForHire && gm.getCurrentPlayer().getReputation() >= 10/*TBD */, lockedDescriptionBuy("Employees for Hire"), description("Gatekeeper for %Managers, allows the opponent to start committing reputational damage (if reputation is low enough, this may not be purchased and may even be taken away)")),
+        }, 100000, ()->gm.getCurrentPlayer().employeesForHire && gm.getCurrentPlayer().getReputation() >= 10/* TBD */, lockedDescriptionBuy("Employees for Hire"), description("Gatekeeper for %Managers, allows the opponent to start committing reputational damage (if reputation is low enough, this may not be purchased and may even be taken away)")), ()->gm.getCurrentPlayer().megacorpBO),
 
         buyOption("Managers", ()->{
             gm.getCurrentPlayer().multiplyIncomeBy(0.5);
@@ -244,35 +250,35 @@ public class OptionPath {
         buyOption("Improve Website", ()->{
             gm.getCurrentPlayer().increaseMaxHealth(1);
             gm.getCurrentPlayer().increaseHealthLeft(1);
-            gm.getCurrentPlayer().increaseIncomePerRound(10);
+            gm.getCurrentPlayer().increaseIncomePerRound(20);
 
             setMessage("You have increased your max health, current health, and your income per round.");
         }, 30, "Increases infrastructure HP and income per round"),
 
-        buyOption("Improve Efficiency", ()->{
+        boughtOnceOption(buyOption("Improve Efficiency", ()->{
             gm.getCurrentPlayer().increaseNumOfMoves(1);
 
             setMessage("You have increased your moves per turn by %1");
-        }, 500, "Increase number of moves per turn."),
+        }, 500, "Increase number of moves per turn."), ()->gm.getCurrentPlayer().improveEfficiency),
 
         buyOption("Advertisements", ()->{
-            gm.getCurrentPlayer().increaseIncomePerRound(50);
+            gm.getCurrentPlayer().increaseIncomePerRound(100);
 
             setMessage("You have increased your income per round by %$50");
         }, 200, "Increases income per round."),
 
         buyOption("Longer Work Hours", ()->{
-            gm.getCurrentPlayer().increaseReputation(0.1);
+            gm.getCurrentPlayer().increaseReputation(gm.getCurrentPlayer().getLongerWorkHours());
 
             setMessage("You have increased your reputation by %0.1");
         }, 1000, "Very slightly increases reputation and medium income increase."),
     
-        buyOption("Legitimate Inc.", ()->{
+        boughtOnceOption(buyOption("Legitimate Inc.", ()->{
             gm.getCurrentPlayer().setCanTakePhysicalAttack(true);
             gm.getCurrentPlayer().legitimateInc = true;
 
-            setMessage("You have unlocked %Employees %For %Hire. Your opponent can also commit physical attacks on you.");
-        }, 10000, description("Gatekeeper for %Employees %For %Hire, also allows the opponent to start committing physical attacks")),
+            setMessage("You have unlocked %Employees %For %Hire. Your opponent can now commit physical attacks on you.");
+        }, 10000, description("Gatekeeper for %Employees %For %Hire, also allows the opponent to start committing physical attacks")), ()->gm.getCurrentPlayer().legitimateIncBO),
 
         nextPage("Page 2", econPage2)
     };
@@ -289,50 +295,66 @@ public class OptionPath {
 
     private static Option[] attackOption2 = {
         buyOption("Shut Down Website", ()->{
-
+            gm.setVictoriousPlayer(gm.getCurrentPlayer());
+            gm.endGame();
         }, 0, ()->true, lockedDescription("decreasing opponent's infrastructure HP to zero"), "Winning move after severe infrastructure damage (The opponent cannot make a move after infra turns to zero, allowing the player to use this move and win)"),
 
         buyOption("Monopolize", ()->{
+            gm.setVictoriousPlayer(gm.getCurrentPlayer());
+            gm.endGame();
+        }, 0, ()->true, lockedDescription("meeting the win condition."), "Econ win move, move unlocked only after severe economic advantage"),
 
-        }, 0, ()->true, lockedDescription("meeting the win condition."), "Econ win move, move unlocked only after severe economic advantage")
+        buyOption("Wipeout", ()->{
+            gm.setVictoriousPlayer(gm.getCurrentPlayer());
+            gm.endGame();
+        }, 999999,()->true, lockedDescriptionCustom("meeting win conditions and purchasing %DARKNET"), "Winning move, only unlocked after high reputation and several requirements.")
+
     };
 
     private static Options attackPage2 = Options.buildPage(attackOption2, "Page 2");
 
     private static Option[] attackOptions1 = {
         // buyOption("Decrease Opponent Income (TEST)", ()->{
-        //     setMessage("You have decreased opponent's income");
-        //     gm.getOtherPlayer().addDamageTook("Decreased Income",()->{
-        //         gm.getCurrentPlayer().affectIncomeAffected(-10000);
-        //     });
+        //     // setMessage("You have decreased opponent's income");
+        //     // gm.getOtherPlayer().addDamageTook("Decreased Income",()->{
+        //     //     gm.getCurrentPlayer().affectIncomeAffected(-10000);
+        //     // });
+        //     gm.setVictoriousPlayer(gm.getCurrentPlayer());
+        //     gm.endGame();
         // }, 100, "Decreases oppo income"),
 
         buyOption("Scam Emails", ()->{
-            
+            int damageTook = gm.getOtherPlayer().doEmailTypeAttack(1, "scam");
+
+            setMessage("You have sent a scam email to your opponent. They have taken %" + damageTook + " damage.");
         }, 1, ()->gm.getOtherPlayer().getNumOfEmployees() > 0, lockedDescriptionBuyOppo("Employees for Hire"), "Damages opponent's infra HP. Effectiveness increases with the number of employees of the opponent."),
 
         buyOption("Malware Emails", ()->{
-            
+            int damageTook = gm.getOtherPlayer().doEmailTypeAttack(1, "malware");
+
+            setMessage("You have sent a malware email to your opponent. They have taken %" + damageTook + " damage.");
         }, 80, ()->gm.getOtherPlayer().getNumOfEmployees() > 0, lockedDescriptionBuyOppo("Employees for Hire"), "Damages opponent's infra HP. Effectiveness can increase with better techniques learned later in the game, but at the beginning effectiveness increases with more employees"),
 
         buyOption("Malware+", ()->{
+            gm.getOtherPlayer().decreaseHealth(2);
 
-        }, 4000, ()->true, lockedDescriptionBuyOppo("Employees for Hire"), description("“Downloads harmful software directly onto the computer just by opening the email”, does more infrastructure damage than normal %Malware %Emails")),
+            setMessage("You have decreased your opponent's health by 2");
+        }, 4000, ()->gm.getOtherPlayer().employeesForHire, lockedDescriptionBuyOppo("Employees for Hire"), description("“Downloads harmful software directly onto the computer just by opening the email”, does more infrastructure damage than normal %Malware %Emails")),
 
         buyOptionHidden("Trojan Mails", ()->{
-            setMessage("You have sent a trojan mail to the enemy.");
             gm.getOtherPlayer().trojanMail = ()->{
-                gm.getCurrentPlayer().decreaseHealth(10);
+                gm.getCurrentPlayer().decreaseReputation(1);
+                gm.getOtherPlayer().increaseReputation(1);
             };
-        }, 1000, ()->true, lockedDescriptionBuyOppo("Employees for Hire"), "Does not show up at the beginning of the turn, and siphons one infra every turn. Better memorize your health!"),
+            setMessage("You have sent a trojan mail to the enemy.");
+        }, 1000, ()->gm.getOtherPlayer().employeesForHire, lockedDescriptionBuyOppo("Employees for Hire"), "Does not show up at the beginning of the turn, and siphons one infra every turn. Better memorize your health!"),
 
         buyOption("DDOS", ()->{
+            gm.getOtherPlayer().decreaseReputation(0.1);
+            gm.getOtherPlayer().decreaseHealth(3);
 
+            setMessage("You have decreased your opponent's current health and reputation");
         }, 10000, "Does reputation damage, and a decent amount of infrastructure damage"),
-
-        buyOption("Dronestrike", ()->{
-
-        }, 999999,()->true, lockedDescriptionCustom("meeting win conditions and purchasing %DARKNET"), "Winning move, only unlocked after high reputation and several requirements."),
 
         nextPage("Page 2", attackPage2)
     };
@@ -349,24 +371,35 @@ public class OptionPath {
 
     private static Option[] reputationOptions = {
         buyOption("Vendor", ()->{
-
+            gm.getCurrentPlayer().increaseReputation(0.01);
+            
+            setMessage("You have increased your reputation by %0.01");
         }, 10, "Increases reputation slightly."),
 
         buyOption("Contractor", ()->{
-
+            gm.getCurrentPlayer().increaseReputation(0.1);
+            
+            setMessage("You have increased your reputation by %0.1");
         }, 20, description("More expensive form of %Vendor, increases reputation more than %Vendor but still not that much")),
 
-        buyOption("PR Team", ()->{
+        boughtOnceOption(buyOption("PR Team", ()->{
+            double newReputationEarnedPerRound = gm.getCurrentPlayer().increaseReputationEarnedPerRound(0.5);
+            gm.getCurrentPlayer().multiplyNumOfEmployeesMultiplierBy(1.5);
 
-        }, 4000, "Severely increases vulnerability to email-type attacks, but you gain reputation per turn"),
+            setMessage("You now gain %"+newReputationEarnedPerRound + " reputation per round. You also receive 1.5x more damage from email-type attacks.");
+        }, 4000, "Severely increases vulnerability to email-type attacks, but you gain reputation per turn"), ()->gm.getCurrentPlayer().prTeam),
 
         buyOption("BLACKMARKET", ()->{
+            gm.getCurrentPlayer().blackMarketCounter++;
 
-        }, 9999, description("Allows you access to more black markets in this order; costs a ton; order of markets: %Heisenberg.net, %Plunder Bay, %DEADSEA.org, %ZeroSquad.com")),
+            setMessage("Your BLACKMARKET level is now %" + gm.getCurrentPlayer().blackMarketCounter);
+        }, 9999, description("Allows you access to more black markets. Costs a ton order of markets")),
 
         buyOption("DARKNET", ()->{
+            gm.getCurrentPlayer().darkNetCounter++;
 
-        }, 14999, ()->true, lockedDescriptionBuy("BLACKMARKET"), description("Allows you access to more advanced black markets situated on the %DARKNET (in this order): %Silky %Street, %CannabisUS, %Empire.onion, %armageddon.onion"))
+            setMessage("Your DARKNET level is now %" + gm.getCurrentPlayer().darkNetCounter);
+        }, 14999, ()->gm.getCurrentPlayer().blackMarketCounter > 0, lockedDescriptionBuy("BLACKMARKET"), description("Allows you access to more advanced black markets situated on the %DARKNET"))
     };
 
     private static Options reputationPage = Options.buildPage(reputationOptions, "Reputation Moves");
@@ -374,161 +407,189 @@ public class OptionPath {
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET HEISENBERG
+     * MARKET Sky.net
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketHeisenbergOptions = {
-        buyOption("Narcotica Maxima", ()->{
+    private static Option[] marketSkyNetOptions = {
+        boughtOnceOption(buyOption("Out of the Blue", ()->{
+            gm.getCurrentPlayer().increaseOvertimeMultiplier(0.01); //TBD
+            gm.getCurrentPlayer().increaseLongerWorkHours(100); //TBD
 
-        }, 99134, description("Improves %Overtime and %Longer %Work %Hours.")),
+            setMessage("You have increased the efficiency of %Overtime and %Longer %Work %Hours.");
+        }, 99134, description("Improves %Overtime and %Longer %Work %Hours.")), ()->gm.getCurrentPlayer().outOfTheBlue),
 
         buyOption("temere verba", ()->{
+            gm.getCurrentPlayer().increaseReputation(10);//TBD
+            gm.getCurrentPlayer().increaseIncomePerRound(1000);//TBD
 
+            setMessage("You have increased your reputation and income per round.");
         }, 10000, "Improves infra and income.")
     };
 
-    private static Options marketHeisenbergPage = Options.buildPage(marketHeisenbergOptions, "Heisenberg.net");
+    private static Options marketSkynetPage = Options.buildPage(marketSkyNetOptions, "Heisenberg.net");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET PLUNDERBAY
+     * MARKET Conflix
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketPlunderbayOptions = {
-        buyOption("TotallyLegalMovies", ()->{
+    private static Option[] marketConflixOptions = {
+        boughtOnceOption(buyOption("TotallyLegalMovies", ()->{
+            gm.getCurrentPlayer().increaseNumOfMoves(1); //TBD
 
-        }, 4000, "Increases moves per turn"),
+            setMessage("You have increased your moves per turn.");
+        }, 4000, "Increases moves per turn"), ()->gm.getCurrentPlayer().totallyLegalMovies),
 
-        buyOption("Side Hustle", ()->{
+        boughtOnceOption(buyOption("Side Hustle", ()->{  
+            int amount = gm.getCurrentPlayer().getNumOfMovesLeft() * 100;
+            gm.getCurrentPlayer().increaseCurrentMoneyLeft(amount);
 
-        }, 104203, "Increases income for one round depending on how many spare moves there are.")
+            setMessage("You have increased your money left by %" + amount);
+        }, 104203, "Gives you money. The amount depends on how many spare moves you have."), ()->gm.getCurrentPlayer().sideHustle)
+        
     };
 
 
-    private static Options marketPlunderbayPage = Options.buildPage(marketPlunderbayOptions, "Plunder Bay");
+    private static Options marketConflixPage = Options.buildPage(marketConflixOptions, "Plunder Bay");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET DEADSEA
+     * MARKET LivelyOcean.org
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketDEADSEAOptions = {
-        buyOption("Basic FakeID", ()->{
+    private static Option[] marketLivelyOceanOptions = {
+        boughtOnceOption(buyOption("Basic FakeID", ()->{
+            gm.getCurrentPlayer().increaseReputation(10); //TBD
 
-        }, 2000, description("Allows you access to %DARKET upgrades, increases reputation.")),
+            setMessage("You can now access %DARKNET upgrades. You have also increased your reputation.");
+        }, 2000, description("Allows you access to %DARKNET upgrades, increases reputation.")), ()->gm.getCurrentPlayer().basicFakeID),
 
-        buyOption("Basicer FakeID", ()->{
-
-        }, 999999999, "Wastes money, free of charge ;)")
+        boughtOnceOption(buyOption("Basicer FakeID", ()->{
+            setMessage("You have wasted a ton of money. You stooopid.");
+        }, 999999999, "Wastes money, free of charge ;)"), ()->gm.getCurrentPlayer().basicerFakeID)
+        
     };
 
-    private static Options marketDEADSEAPage = Options.buildPage(marketDEADSEAOptions, "DEADSEA.org");
+    private static Options marketLivelyOceanPage = Options.buildPage(marketLivelyOceanOptions, "DEADSEA.org");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET ZEROSQUAD
+     * MARKET PPProfessionalll
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketZeroSquadOptions = {
-        buyOption("Burglary", ()->{
+    private static Option[] marketProfessionalOptions = {
+        buyOption("Filching", ()->{
+            gm.getOtherPlayer().decreaseReputation(10); //TBD
+            gm.getCurrentPlayer().increaseCurrentMoneyLeft(10); //TBD
 
-        }, 2000, "Siphons a small amount of money."),
-
+            setMessage("You stole a little bit of money from your opponent.");
+        }, 2000, ()->gm.getOtherPlayer().canTakePhysicalAttack(), "Your opponent cannot take physical attack yet.", "Siphons a small amount of money."),
+            
         buyOption("HARMFULMEMES", ()->{
+            gm.getOtherPlayer().decreaseReputation(10); //TBD
 
+            setMessage("You have decreased your opponent's reputation.");
         }, 1000, "Does small damage to the opponent’s reputation"),
 
         buyOption("TWITTERHACK", ()->{
-
+            gm.getOtherPlayer().decreaseReputation(10); //TBD
+            gm.getOtherPlayer().decreaseHealth(10); //TBD
         }, 50000, "Does small damage to the opponent’s reputation and infrastructure.")
     };
 
-    private static Options marketZeroSquadPage = Options.buildPage(marketZeroSquadOptions, "ZeroSquad.com");
+    private static Options marketProfessionalPage = Options.buildPage(marketProfessionalOptions, "ZeroSquad.com");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET SIKLY STREET
+     * MARKET Center East
      * 
      * ------------------------------------------------------------------------------------------
      */
 
 
-    private static Option[] marketSilkyStreetOptions = {
+    private static Option[] marketCenterEastOptions = {
         buyOption("FREEMARKET", ()->{
-
+            gm.getCurrentPlayer().increaseIncomePerRound(9000); //TBD
+            
+            setMessage("You have slightly increased your income.");
         }, 19234, "Slightly increases income."),
 
-        buyOption("Reputable Seller", ()->{
+        boughtOnceOption(buyOption("Reputable Seller", ()->{
+            gm.getCurrentPlayer().increaseReputation(10); //TBD
 
-        }, 20180, "Increases reputation, like duh what else would it do.")
+            setMessage("You have increased your reputation.");
+        }, 20180, "Increases reputation, like duh what else would it do."), ()-> gm.getCurrentPlayer().reputableSeller)
     };
 
-    private static Options marketSilkyStreetPage = Options.buildPage(marketSilkyStreetOptions, "Silky Street");
+    private static Options marketCenterEastPage = Options.buildPage(marketCenterEastOptions, "Silky Street");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET GREENUS
+     * MARKET Fuji Apples
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketGreenUSOptions = {
-        buyOption("LEGALIZATION", ()->{
+    private static Option[] marketFujuApplesOptions = {
+        boughtOnceOption(buyOption("LEGALIZATION", ()->{
+            gm.getCurrentPlayer().increaseIncomePerRound(50000); //TBD
 
-        }, 56724, "Increases income per round."),
+            setMessage("You have increased your income per round.");
+        }, 56724, "Increases income per round. "), () ->gm.getCurrentPlayer().legalization),
 
-        buyOption("Cruelty Squad", ()->{
+        buyOption("Demoralize", ()->{
+            gm.getOtherPlayer().decreaseNumOfEmployees(10); //TBD
 
-        }, 99999, "Decreases the number of opponent’s employees")
+            setMessage("You have decreased the number of opponent's employees. ");
+        }, 99999, ()->gm.getOtherPlayer().canTakePhysicalAttack(), "Your opponent cannot take physical attack yet.", "Decreases the number of opponent’s employees")
     };
 
-    private static Options marketGreenUSPage = Options.buildPage(marketGreenUSOptions, "GreenUS");
+    private static Options marketFujiApplesPage = Options.buildPage(marketFujuApplesOptions, "GreenUS");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET EMPIRE ONION
+     * MARKET Romeo.com
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketEmpireOnionOptions = {
-        buyOption("FakestID", ()->{
-
+    private static Option[] marketRomeoComOptions = {
+        buyOption("Legally Ghost", ()->{
+            gm.setVictoriousPlayer(gm.getCurrentPlayer());
+            gm.endGame();
         }, 666666, "One of the winning conditions."),
 
         buyOption("Databased", ()->{
-
+            gm.setVictoriousPlayer(gm.getCurrentPlayer());
+            gm.endGame();
         },202350, "Does nothing, one of the winning conditions.")
     };
 
-    private static Options marketEmpireOnionPage = Options.buildPage(marketEmpireOnionOptions, "Empire.onion");
+    private static Options marketRomeoComPage = Options.buildPage(marketRomeoComOptions, "Empire.onion");
 
     /* ------------------------------------------------------------------------------------------
      *
-     * MARKET ARMAGEDDON ONION
+     * MARKET armageddon.org
      * 
      * ------------------------------------------------------------------------------------------
      */
 
-    private static Option[] marketArmageddonOnionOptions = {
-        buyOption("Governmental Access", ()->{
-
-        }, 0, "One of the winning conditions"),
-
-        buyOption("Drone Strike", ()->{
-
-        }, 0, ()->true, lockedDescriptionCustom("purchasing %FakestID, %Databased, and %Governmental %Access."), "")
+    private static Option[] marketArmageddonOrgOptions = {
+        buyOption("Hippity Hoppity", ()->{
+            gm.setVictoriousPlayer(gm.getCurrentPlayer());
+            gm.endGame();
+        }, 69696969, "One of the winning conditions")
     };
 
-    private static Options marketArmageddonOnionPage = Options.buildPage(marketArmageddonOnionOptions, "armageddon.onion");
+    private static Options marketArmageddonOrgPage = Options.buildPage(marketArmageddonOrgOptions, "armageddon.onion");
 
     /* ------------------------------------------------------------------------------------------
      *
@@ -538,19 +599,19 @@ public class OptionPath {
      */
 
     private static Option[] marketOptions2 = {
-        nextPage("Empire.onion", marketEmpireOnionPage, ()->true, lockedDescription("purchasing DARKNET for the third time."), ""),
-        nextPage("armageddon.onion", marketArmageddonOnionPage, ()->true, lockedDescription("purchasing DARKNET for the fourth time"), "")
+        nextPage("Romeo.com", marketRomeoComPage, ()->gm.getCurrentPlayer().darkNetCounter >= 3, lockedDescription("purchasing DARKNET for the third time."), ""),
+        nextPage("armageddon.org", marketArmageddonOrgPage, ()->gm.getCurrentPlayer().darkNetCounter >= 4, lockedDescription("purchasing DARKNET for the fourth time"), "")
     };
 
     private static Options marketPage2 = Options.buildPage(marketOptions2, "Page 2");
 
     private static Option[] marketOptions1 = {
-        nextPage("Heiesnberg.net", marketHeisenbergPage, ()->true, lockedDescriptionCustom("purchasing %BLACKMARKET for the first time"), ""),
-        nextPage("Plunder Bay", marketPlunderbayPage, ()->true, lockedDescriptionCustom("purchasing %BLACKMARKET for the second time"), ""),
-        nextPage("DEADSEA.org", marketDEADSEAPage, ()->true, lockedDescriptionCustom("purchasing %BLACKMARKET for the third time"), ""),
-        nextPage("ZeroSquad.com", marketZeroSquadPage, ()->true, lockedDescriptionCustom("purchasing %BLACKMARKET for the fourth time"), ""),
-        nextPage("Silky Street", marketSilkyStreetPage, ()->true, lockedDescriptionCustom("purchasing %DARKNET for the first time"), ""),
-        nextPage("GreenUS", marketGreenUSPage, ()->true, lockedDescriptionCustom("purchasing %DARKNET for the second time"), ""),
+        nextPage("Sky.net", marketSkynetPage, ()->gm.getCurrentPlayer().blackMarketCounter >= 1, lockedDescriptionCustom("purchasing %BLACKMARKET for the first time"), ""),
+        nextPage("Conflix", marketConflixPage, ()->gm.getCurrentPlayer().blackMarketCounter >= 2, lockedDescriptionCustom("purchasing %BLACKMARKET for the second time"), ""),
+        nextPage("LivelyOcean.org", marketLivelyOceanPage, ()->gm.getCurrentPlayer().blackMarketCounter >= 3, lockedDescriptionCustom("purchasing %BLACKMARKET for the third time"), ""),
+        nextPage("PPProfessionalll", marketProfessionalPage, ()->gm.getCurrentPlayer().blackMarketCounter >= 4, lockedDescriptionCustom("purchasing %BLACKMARKET for the fourth time"), ""),
+        nextPage("Center East", marketCenterEastPage, ()->gm.getCurrentPlayer().darkNetCounter >= 1, lockedDescriptionCustom("purchasing %DARKNET for the first time"), ""),
+        nextPage("Fuji Apples", marketFujiApplesPage, ()->gm.getCurrentPlayer().darkNetCounter >= 2, lockedDescriptionCustom("purchasing %DARKNET for the second time"), ""),
 
         nextPage("Page 2", marketPage2)
     };

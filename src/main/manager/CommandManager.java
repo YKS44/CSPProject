@@ -12,6 +12,7 @@ public class CommandManager{
 
     private CommandManager(){
         commandMap = new HashMap<>();
+
     }
 
     public void addCommand(String name, Action action){

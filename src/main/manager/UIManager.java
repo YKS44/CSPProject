@@ -21,7 +21,7 @@ public class UIManager{
 
     private HashMap<String, String> colorMap = new HashMap<>();
 
-    private List<Options> prev;
+    public List<Options> prev;
     private Options currentPage;
     private String message1;
     private String message2;
@@ -53,7 +53,7 @@ public class UIManager{
         {
             instance = new UIManager();
         }
-
+        
         return instance;
     } 
 
@@ -76,6 +76,11 @@ public class UIManager{
                 setMessage1(getColoredText("red", "Unfortunately, you are unable to make any more actions. Please end the turn."));
                 return;
             }
+            else if(GameManager.getInstance().getCurrentPlayer().getCurrentHealth() <= 0)
+            {
+                setMessage1(getColoredText("red", "Your infrastructure health has reached zero. You cannot make anymore moves."));
+                return;
+            }
 
             int idx = Integer.parseInt(input) - 1;
             
@@ -90,7 +95,7 @@ public class UIManager{
             }
             
         }catch(Exception e){
-            if(input.startsWith("info") && input.split(" ").length == 2){
+            if(input.startsWith("i") && input.split(" ").length == 2){
                 String[] cmd = input.split(" ");
                 try{
                     int idx = Integer.parseInt(cmd[1]);
@@ -137,7 +142,6 @@ public class UIManager{
         System.out.println(message2);
 
         message1 = "";
-        //message2 = "";
     }
 
     public void clearScreen(){
@@ -165,7 +169,7 @@ public class UIManager{
 
     public void turnChange(){
         System.out.println("It is your turn, " + getColoredText("green", GameManager.getInstance().getCurrentPlayer().getName()) + "\n");
-        System.out.println("Your income was " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().calculateIncome()));
+        System.out.println("Your income was " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().calculateStuffEarnedPerRound()));
         System.out.println("Your current reputation is " + getColoredText("cyan", GameManager.getInstance().getCurrentPlayer().getReputation()+""));
         System.out.println("You currently have " + getColoredText("cyan", "$" + GameManager.getInstance().getCurrentPlayer().getMoneyLeft()));
         System.out.println("You have "+ getColoredText("yellow", GameManager.getInstance().getCurrentPlayer().getCurrentHealth()+"") + " infrastructure health out of " + getColoredText("yellow", GameManager.getInstance().getCurrentPlayer().getMaxHealth()+""));

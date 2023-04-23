@@ -40,13 +40,36 @@ public class Player {
     private double emailTypeAttackEffectiveness;
     private double repairTechnician;
 
-    private double numOfEmployeesMultiplier = 1.04;
+    private double numOfEmployeesMultiplierScam = 1.02;
+    private double numOfEmployeesMultiplierMalware = 1.04;
 
-    // OPTION UNLOCKING BOOLEANS
+    private double reputationEarnedPerRound = 0.0;
+
+    private double overtimeMultiplier = 0.01;
+    private double longerWorkHour = 0.1;
+
+    // OPTION UNLOCKING VARIABLES
     public boolean legitimateInc = false;
     public boolean employeesForHire = false;
     public boolean megacorp = false;
     public boolean managers = false;
+    public int blackMarketCounter = 0;
+    public int darkNetCounter = 0;;
+
+    //BOUGHT ONCE BOOLEANS
+    public boolean legalization = true;
+    public boolean reputableSeller = true;
+    public boolean basicFakeID = true;
+    public boolean basicerFakeID = true;
+    public boolean totallyLegalMovies = true;
+    public boolean sideHustle = true;
+    public boolean outOfTheBlue = true;
+    public boolean prTeam = true;
+    public boolean socialism = true;
+    public boolean actualProduct = true;
+    public boolean megacorpBO = true;
+    public boolean legitimateIncBO = true;
+    public boolean improveEfficiency = true;
 
     public Player(String name) {
         this.name = name;
@@ -54,14 +77,14 @@ public class Player {
         numOfMoves = 3;
         currentMovesLeft = numOfMoves;
 
-        currentMoneyLeft = 500000000;
+        currentMoneyLeft = 1000;
         income = 0;
         incomeAffected = income;
 
         maxHealth = 100;
         currentHealth = maxHealth;
 
-        reputation = 10000;
+        reputation = 0.0;
 
         canTakePhysicalAttack = false;
         canTakeReputationalAttack = false;
@@ -82,14 +105,46 @@ public class Player {
         this.name = name;
     }
 
+    public void increaseOvertimeMultiplier(double amount)
+    {
+        overtimeMultiplier += amount;
+    }
+
+    public void increaseLongerWorkHours(double amount)
+    {
+        longerWorkHour += amount;
+    }
+
+    public double getLongerWorkHours()
+    {
+        return longerWorkHour;
+    }
+
+    public double getOvertimeMultiplier()
+    {
+        return overtimeMultiplier;
+    }
+
     public boolean canTakeReputationalAttack()
     {
         return canTakeReputationalAttack;
     }
 
+    public double increaseReputationEarnedPerRound(double amount)
+    {
+        reputationEarnedPerRound += amount;
+        return reputationEarnedPerRound;
+    }
+
+    public int getNumOfMovesLeft()
+    {
+        return currentMovesLeft;
+    }
+
     public void multiplyNumOfEmployeesMultiplierBy(double amount)
     {
-        numOfEmployeesMultiplier *= amount;
+        numOfEmployeesMultiplierScam *= amount;
+        numOfEmployeesMultiplierMalware *= amount;
     }
 
     public void setCanTakeReputationalAttack(boolean state)
@@ -109,6 +164,11 @@ public class Player {
     public void increaseNumOfEmployees(int amount)
     {
         numOfEmployees += amount;
+    }
+
+    public void decreaseNumOfEmployees(int amount)
+    {
+        numOfEmployees -= amount;
     }
 
     public void increaseNumOfMoves(int amount)
@@ -147,17 +207,25 @@ public class Player {
     {
         reputation += amount;
     }
-    public void doEmailTypeAttack(int amount)
+
+    public void decreaseReputation(double amount)
     {
-        calculateEmailTypeAttackEffectiveness();
+        reputation -= amount;
+    }
+    
+    public int doEmailTypeAttack(int amount, String type)
+    {
+        calculateEmailTypeAttackEffectiveness(type);
 
         amount = (int) Math.round(amount * emailTypeAttackEffectiveness);
         currentHealth -= amount;
+
+        return amount;
     }
 
-    public void calculateEmailTypeAttackEffectiveness()
+    public void calculateEmailTypeAttackEffectiveness(String type)
     {
-        emailTypeAttackEffectiveness = (Math.pow(numOfEmployeesMultiplier, numOfEmployees)) * repairTechnician;
+        emailTypeAttackEffectiveness = (Math.pow(type.equals("scam") ? numOfEmployeesMultiplierScam : numOfEmployeesMultiplierMalware, numOfEmployees)) * repairTechnician;
     }
 
     public void setRepairTechnicianMultiplier(double amount)
@@ -185,8 +253,13 @@ public class Player {
         return currentMoneyLeft;
     }
 
-    public void decreseMoneyLeft(int amount) {
+    public void decreseCurrentMoneyLeft(int amount) {
         currentMoneyLeft -= amount;
+    }
+
+    public void increaseCurrentMoneyLeft(int amount)
+    {
+        currentMoneyLeft += amount;
     }
 
     public void increaseHealthLeft(int amount)
@@ -285,10 +358,11 @@ public class Player {
         damageTook.put(name,action);
     }
 
-    public int calculateIncome() {
-        double calculateIncome = (100 * Math.sqrt(10 * GameManager.getInstance().getRoundNumber())) + income;
+    public int calculateStuffEarnedPerRound() {
+        double calculateIncome = 15 * (100 * Math.sqrt(10 * GameManager.getInstance().getRoundNumber())) + income;
         incomeAffected = (int) Math.round(calculateIncome);
         updateDamageTook();
+        reputation += reputationEarnedPerRound;
         
         currentMoneyLeft += incomeAffected;
         return incomeAffected;

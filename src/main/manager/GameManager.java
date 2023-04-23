@@ -25,6 +25,8 @@ public class GameManager {
 
     private ArrayList<String> actionsTook;
 
+    private Player victoriousPlayer = null;
+
     private GameManager(){
         scanner = new Scanner(System.in);
         player1 = new Player("Player 1");
@@ -75,7 +77,7 @@ public class GameManager {
 
     private void changeTurnForInit(){
         if(currentPlayer.equals(player1)){
-            currentPlayer.calculateIncome();
+            currentPlayer.calculateStuffEarnedPerRound();
             player1 = currentPlayer;
             player2 = otherPlayer;
 
@@ -124,6 +126,20 @@ public class GameManager {
                 UIManager.getInstance().sendAndReceive(OptionPath.mainPage);
             }
         }
+        //Broke out of the loop, which means the game has ended.
+
+        printWinStuff();
+    }
+
+    public void endGame()
+    {
+        isGameDone = true;
+    }
+
+    private void printWinStuff()
+    {
+        UIManager.getInstance().clearScreen();
+        System.out.println(UIManager.getInstance().getColoredText("green", victoriousPlayer.getName())  + " has won the game!");
     }
 
     public void addActionTook(String action){
@@ -138,11 +154,17 @@ public class GameManager {
         return roundNumber;
     }
 
+    public void setVictoriousPlayer(Player player)
+    {
+        victoriousPlayer = player;
+    }
+
     private void setUpCommand(){
         CommandManager cmd = CommandManager.getInstance();
 
         cmd.addCommand("end", ()->{
             currentPlayer.resetNumOfMoves();
+            UIManager.getInstance().prev.clear();
             UIManager.getInstance().clearScreen();
             UIManager.getInstance().printInColor("purple", "Ending turn..");
             try{
@@ -151,11 +173,6 @@ public class GameManager {
             UIManager.getInstance().clearScreen();
             changeTurn();
             turnDone = false;
-        });
-
-        cmd.addCommand("test", ()->{
-            System.out.println("Current Player: " + currentPlayer.damageTook);
-            System.out.println("Other Player: " + otherPlayer.damageTook);
         });
     }
 
