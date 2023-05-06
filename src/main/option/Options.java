@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author Yuhyun Kim
+ * 
+ */
 public class Options {
     private ArrayList<Option> options;
     private String title;

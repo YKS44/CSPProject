@@ -5,6 +5,10 @@ import java.util.HashMap;
 import main.option.Action;
 import main.option.Options;
 
+/**
+ * @author Yuhyun Kim
+ * 
+ */
 public class CommandManager{
     private static CommandManager instance;
 
@@ -12,7 +16,6 @@ public class CommandManager{
 
     private CommandManager(){
         commandMap = new HashMap<>();
-
     }
 
     public void addCommand(String name, Action action){
@@ -20,9 +23,14 @@ public class CommandManager{
     }
 
     public void invokeCommand(String name, Options page){
+        //If the UIManager queries a command that is registered in the map, then execute it.
         if(commandMap.containsKey(name)){
             commandMap.get(name).execute();
-        }else{
+        }
+        
+        //If it is not found, then it means the user has inputted something weird, so throw an error.
+        else
+        {
             UIManager.getInstance().setMessage1(UIManager.getInstance().getColoredText("red", "Incorrect Input"));
             UIManager.getInstance().sendAndReceive(page);
         }

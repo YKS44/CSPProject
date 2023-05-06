@@ -11,6 +11,10 @@ import main.option.Option;
 import main.option.OptionPath;
 import main.option.Options;
 
+/**
+ * @author Siwoo Kim
+ * 
+ */
 public class Player {
     private String name;
 
@@ -29,7 +33,6 @@ public class Player {
     private boolean canTakePhysicalAttack;
     private boolean canTakeReputationalAttack;
 
-    public HashMap<String, Action> damageTook;
     private int costToRepair;
 
     public Action trojanMail = null;
@@ -54,7 +57,7 @@ public class Player {
     public boolean megacorp = false;
     public boolean managers = false;
     public int blackMarketCounter = 0;
-    public int darkNetCounter = 0;;
+    public int darkNetCounter = 0;
 
     //BOUGHT ONCE BOOLEANS
     public boolean legalization = true;
@@ -71,20 +74,25 @@ public class Player {
     public boolean legitimateIncBO = true;
     public boolean improveEfficiency = true;
 
+    //WIN CONDITIONS
+    public boolean legallyGhost = false;
+    public boolean databased = false;
+    public boolean hippityHoppity = false;
+
     public Player(String name) {
         this.name = name;
 
-        numOfMoves = 3;
+        numOfMoves = 300;
         currentMovesLeft = numOfMoves;
 
-        currentMoneyLeft = 1000;
+        currentMoneyLeft = 100000;
         income = 0;
         incomeAffected = income;
 
         maxHealth = 100;
         currentHealth = maxHealth;
 
-        reputation = 0.0;
+        reputation = 100.0;
 
         canTakePhysicalAttack = false;
         canTakeReputationalAttack = false;
@@ -93,7 +101,6 @@ public class Player {
         emailTypeAttackEffectiveness = 1.0;
         repairTechnician = 1.0;
 
-        damageTook = new HashMap<>();
         costToRepair = 100;
     }
 
@@ -101,8 +108,18 @@ public class Player {
         return name;
     }
 
+    public boolean meetsWinCondition()
+    {
+        return legallyGhost && databased && hippityHoppity && reputation >= 150;
+    }
+
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setCurrentMoneyLeft(int amount)
+    {
+        currentMoneyLeft = amount;
     }
 
     public void increaseOvertimeMultiplier(double amount)
@@ -225,6 +242,7 @@ public class Player {
 
     public void calculateEmailTypeAttackEffectiveness(String type)
     {
+        //If the attack type is scam, then use the scam multiplier, else use malware multiplier
         emailTypeAttackEffectiveness = (Math.pow(type.equals("scam") ? numOfEmployeesMultiplierScam : numOfEmployeesMultiplierMalware, numOfEmployees)) * repairTechnician;
     }
 
@@ -337,7 +355,6 @@ public class Player {
         }
 
         return Options.buildPage(repairDamagePage, "Repair Damage");
-
     }
 
     public void updateDamageTook() {
@@ -354,12 +371,15 @@ public class Player {
         }
     }
 
+    
+    public HashMap<String, Action> damageTook = new HashMap<>();
+
     public void addDamageTook(String name, Action action){
         damageTook.put(name,action);
     }
 
     public int calculateStuffEarnedPerRound() {
-        double calculateIncome = 15 * (100 * Math.sqrt(10 * GameManager.getInstance().getRoundNumber())) + income;
+        double calculateIncome = 10 * (100 * Math.sqrt(10 * GameManager.getInstance().getRoundNumber())) + income;
         incomeAffected = (int) Math.round(calculateIncome);
         updateDamageTook();
         reputation += reputationEarnedPerRound;

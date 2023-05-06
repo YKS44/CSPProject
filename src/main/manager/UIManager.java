@@ -8,6 +8,11 @@ import java.util.stream.Collectors;
 
 import main.option.*;
 
+
+/**
+ * @author Yuhyun Kim
+ * 
+ */
 public class UIManager{
     private final boolean canClearScreen = true; //for testing purposes
 
@@ -21,7 +26,7 @@ public class UIManager{
 
     private HashMap<String, String> colorMap = new HashMap<>();
 
-    public List<Options> prev;
+    
     private Options currentPage;
     private String message1;
     private String message2;
@@ -40,7 +45,6 @@ public class UIManager{
         colorMap.put("cyan","\033[0;36m");
         colorMap.put("white","\033[0;37m");
 
-        prev = new ArrayList<>();
         message1 = "";
         message2 = "";
         currentPage = null;
@@ -53,17 +57,19 @@ public class UIManager{
         {
             instance = new UIManager();
         }
-        
         return instance;
     } 
 
+
+    public List<Options> prev = new ArrayList<>();
+
     public void sendAndReceive(Options options){
-        if(currentPage != null && !prev.contains(currentPage)){
+        //inserts the current page into the previous page list so that the user can trace back their visited pages
+        if(currentPage != null && !prev.contains(currentPage) && !prev.isEmpty() && prev.get(prev.size()-1) != currentPage){
             prev.add(currentPage);
         }
         currentPage = options;
 
-        prev = (List<Options>) prev.stream().distinct().collect(Collectors.toList());
 
         printOptions(options);
 
@@ -72,6 +78,7 @@ public class UIManager{
         clearScreen();
 
         try{
+            //If the user has run out of moves or has run out of health, then don't allow the user to make inputs
             if(GameManager.getInstance().turnDone && !input.equals("end")){
                 setMessage1(getColoredText("red", "Unfortunately, you are unable to make any more actions. Please end the turn."));
                 return;
@@ -82,6 +89,7 @@ public class UIManager{
                 return;
             }
 
+            //Try to parse the input into an integer. If it succeeds, then it means the user is attempting to select an option.
             int idx = Integer.parseInt(input) - 1;
             
             Option selected = options.getOptions().get(idx);
@@ -94,18 +102,25 @@ public class UIManager{
                 sendAndReceive(options);
             }
             
-        }catch(Exception e){
+        }catch(IndexOutOfBoundsException | NumberFormatException e){
+            //If it catches an error, then it means one of two things: User attempted to run a command or 
+            //they just put in a number out of range of the options.
+
+            //If the input started with 'i' and the amount of words in the string is equal to two,
+            //it means the user is trying to use the info command.
             if(input.startsWith("i") && input.split(" ").length == 2){
                 String[] cmd = input.split(" ");
                 try{
                     int idx = Integer.parseInt(cmd[1]);
 
                     setMessage1(getDescription(idx - 1));
-                }catch(NumberFormatException e2){
-                    setMessage1(getColoredText("red", "Please input a number, not a character."));
+                }catch(NumberFormatException | IndexOutOfBoundsException e2){
+                    setMessage1(getColoredText("red", "Please input a correct number"));
                 }
                 sendAndReceive(options);
             }else{
+                //Else, it is using other commands, such as the 'home' or 'back' command. If the user inputs 
+                //gibberish or a command that is not accessible, then the command manager class will handle it.
                 CommandManager.getInstance().invokeCommand(input, options);
             }
         }
@@ -130,7 +145,6 @@ public class UIManager{
             if(option.getIsUnlocked() == true){
                 System.out.println((i+1) + ". " + title);
             }else{
-
                 System.out.println((i+1) + ". " + getColoredText("red", "[LOCKED]"));
             }
             

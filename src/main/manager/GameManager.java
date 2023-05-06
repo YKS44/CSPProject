@@ -6,6 +6,11 @@ import java.util.Scanner;
 import main.Player;
 import main.option.OptionPath;
 
+
+/**
+ * @author Yuhyun Kim
+ * 
+ */
 public class GameManager {
     private static GameManager instance;
 
@@ -139,7 +144,7 @@ public class GameManager {
     private void printWinStuff()
     {
         UIManager.getInstance().clearScreen();
-        System.out.println(UIManager.getInstance().getColoredText("green", victoriousPlayer.getName())  + " has won the game!");
+        System.out.println(UIManager.getInstance().getColoredText("green", victoriousPlayer.getName()) + " has won the game!");
     }
 
     public void addActionTook(String action){
